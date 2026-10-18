@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chat Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<style>
+/* Layout: two-pane messenger (list + conversation) on wide screens, single pane with a back button on phones. Dark-first. */
+:root{
+  --bg:#0a0a12; --surface:#13131e; --surface2:#1b1b2a; --line:#2a2a3e;
+  --fg:#ecebf8; --muted:#9594b0; --accent:#6f5ff5; --accent2:#9a8fff; --accent-fg:#ffffff;
+  --bubble-in:#1d1d2e; --danger:#ff7088; --ok:#3ddc97; --shadow:0 18px 50px rgba(0,0,0,.45);
+  --font-display:"Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --font-body:"IBM Plex Sans Arabic","Readex Pro",Tahoma,system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f3f3fb; --surface:#ffffff; --surface2:#ecebf8; --line:#dad8f0;
+    --fg:#15142b; --muted:#66648a; --accent:#5a4af0; --accent2:#4636d6; --accent-fg:#ffffff;
+    --bubble-in:#ffffff; --danger:#d6314f; --ok:#10905f; --shadow:0 18px 50px rgba(40,30,120,.16);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f3f3fb; --surface:#ffffff; --surface2:#ecebf8; --line:#dad8f0;
+  --fg:#15142b; --muted:#66648a; --accent:#5a4af0; --accent2:#4636d6; --accent-fg:#ffffff;
+  --bubble-in:#ffffff; --danger:#d6314f; --ok:#10905f; --shadow:0 18px 50px rgba(40,30,120,.16);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:15px; line-height:1.55;
+  padding-block:0; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  overflow:hidden;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+svg{display:block}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+#app{height:100%}
+
+/* ---------- auth ---------- */
+.auth{height:100%;display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(24px,5vw,72px);align-items:center;max-width:1100px;margin:0 auto;overflow:auto;padding-block:24px}
+.hero{display:flex;flex-direction:column;gap:22px;min-width:0}
+.brand{display:flex;align-items:center;gap:12px}
+.brand b{font-family:var(--font-display);font-weight:700;font-size:1.35rem;letter-spacing:.01em}
+.hero h1{font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.1;font-weight:700}
+.hero h1 span{background:linear-gradient(100deg,var(--accent2),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:44ch;margin:0;font-size:1.05rem}
+.demo-thread{display:flex;flex-direction:column;gap:8px;max-width:340px}
+.demo-thread .b{padding:9px 14px;border-radius:18px;font-size:.92rem;width:fit-content;max-width:90%}
+.demo-thread .in{background:var(--bubble-in);border:1px solid var(--line);border-end-start-radius:6px}
+.demo-thread .out{background:var(--accent);color:var(--accent-fg);align-self:flex-end;border-end-end-radius:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow);min-width:0}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface2);border-radius:14px;padding:4px;gap:4px}
+.seg button{padding:8px 10px;border-radius:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+form.stack{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:var(--muted)}
+.inp{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--fg);width:100%;min-width:0}
+.inp:focus{outline:2px solid var(--accent2);outline-offset:0;border-color:transparent}
+.btn{background:var(--accent);color:var(--accent-fg);border-radius:14px;padding:12px 18px;font-weight:600;transition:filter .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:var(--surface2);color:var(--fg)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+.btn.sm{padding:8px 12px;border-radius:11px;font-size:.88rem}
+.err{color:var(--danger);font-size:.88rem;min-height:1.2em;margin:0}
+.link{color:var(--accent2);text-align:start;font-size:.88rem;width:fit-content}
+.note{font-size:.8rem;color:var(--muted);margin:14px 0 0;line-height:1.5}
+.topbar{position:absolute;inset-block-start:max(14px,env(safe-area-inset-top,0px));inset-inline-end:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px;z-index:3}
+
+/* ---------- app shell ---------- */
+.shell{height:100%;display:grid;grid-template-columns:minmax(300px,380px) 1fr;max-width:1280px;margin:0 auto;border-inline:1px solid var(--line);background:var(--surface)}
+.side{display:flex;flex-direction:column;min-height:0;min-width:0;border-inline-end:1px solid var(--line);background:var(--surface)}
+.side-h{display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top,0px)) 14px 10px}
+.side-h .brand{flex:1;min-width:0}
+.ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--muted);flex:none}
+.ib:hover{background:var(--surface2);color:var(--fg)}
+.search{padding:0 14px 10px}
+.search .inp{padding:10px 14px;border-radius:999px}
+.tabs{margin:0 14px 8px}
+.badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:.72rem;font-weight:600}
+.list{flex:1;overflow:auto;min-height:0;padding:0 8px 12px}
+.row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:16px;width:100%;text-align:start}
+.row:hover,.row[aria-current="true"]{background:var(--surface2)}
+.row .mid{flex:1;min-width:0}
+.row .nm{font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.row .nm small{color:var(--muted);font-weight:400;font-size:.75rem;flex:none}
+.row .pv{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:.88rem}
+.row .pv span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{position:relative;flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-weight:600;color:#fff;background:var(--accent);overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.lg{width:96px;height:96px;font-size:2rem}
+.av.sm{width:40px;height:40px}
+.dotwrap{position:relative;flex:none}
+.dot{position:absolute;inset-block-end:0;inset-inline-end:0;width:13px;height:13px;border-radius:50%;background:var(--ok);border:2px solid var(--surface)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--muted);padding:32px 20px;height:100%}
+.empty h2{color:var(--fg);font-size:1.25rem}
+.empty p{margin:0;max-width:34ch}
+.empty svg{color:var(--accent2);opacity:.9}
+
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.ch{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top,0px)) 14px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ch .who{flex:1;min-width:0}
+.ch .who b{display:block;font-family:var(--font-display);font-weight:600;line-height:1.3}
+.ch .who span{font-size:.8rem;color:var(--muted)}
+.ch .who span.live{color:var(--ok)}
+.back{display:none}
+.msgs{flex:1;overflow:auto;padding:18px 14px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.m{display:flex;gap:8px;align-items:flex-end;max-width:min(78%,520px)}
+.m.out{align-self:flex-end;flex-direction:row}
+.m.in{align-self:flex-start}
+.bub{padding:8px 12px 6px;border-radius:18px;min-width:0;overflow-wrap:anywhere}
+.m.in .bub{background:var(--bubble-in);border:1px solid var(--line);border-end-start-radius:6px}
+.m.out .bub{background:linear-gradient(135deg,var(--accent),#5a4be0);color:var(--accent-fg);border-end-end-radius:6px}
+.bub .tm{display:flex;gap:8px;justify-content:flex-end;align-items:center;font-size:.7rem;opacity:.72;margin-top:2px}
+.bub .tm button{opacity:.8;display:inline-grid}
+.bub .tm button:hover{opacity:1}
+.bub img.pic{display:block;max-width:100%;width:260px;border-radius:12px;margin-bottom:4px}
+.bub.gone{font-style:italic;opacity:.7;background:transparent!important;border:1px dashed var(--line)!important;color:var(--muted)!important}
+.sname{font-size:.72rem;color:var(--accent2);font-weight:600}
+.composer{display:flex;align-items:flex-end;gap:8px;padding:10px 12px max(12px,env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;max-height:120px;min-height:44px;border-radius:22px;padding:11px 16px;background:var(--surface2);border:1px solid var(--line);color:var(--fg);min-width:0}
+.composer textarea:focus{outline:2px solid var(--accent2);outline-offset:0;border-color:transparent}
+.send{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:none}
+.send svg{transform:scaleX(var(--flip,1))}
+.blockednote{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px;background:var(--surface);border-top:1px solid var(--line);color:var(--muted);flex-wrap:wrap}
+
+/* ---------- AI characters ---------- */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 10px 10px;scrollbar-width:none}
+.chip{flex:none;padding:6px 12px;border-radius:999px;background:var(--surface2);color:var(--muted);font-size:.85rem;border:1px solid var(--line)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.ccard{margin:0 6px 8px;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--surface2);display:flex;flex-direction:column;gap:8px}
+.ccard .ctop{display:flex;gap:12px;align-items:center}
+.ccard .cm{flex:1;min-width:0;display:flex;flex-direction:column}
+.ccard .cm b{font-family:var(--font-display);font-weight:600}
+.ccard .cm span{color:var(--accent2);font-size:.8rem}
+.ccard p{margin:0;color:var(--muted);font-size:.88rem}
+.star{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;color:var(--muted);flex:none}
+.star:hover{background:var(--surface)}
+.star[aria-pressed="true"]{color:#f5b942}
+.star[aria-pressed="true"] svg{fill:currentColor}
+.sysmsg{align-self:center;max-width:90%;text-align:center;font-size:.8rem;color:var(--muted);padding:6px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-block:6px}
+.aibar{padding:6px 14px;font-size:.78rem;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--line);text-align:center}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:4px 12px 6px}
+.dhead h2{font-size:1rem}
+textarea.inp{resize:vertical;min-height:84px}
+select.inp{appearance:auto}
+.crow{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.crow b{font-family:var(--font-display);font-weight:600}
+
+/* ---------- living world ---------- */
+.wsec{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--accent2);padding:14px 12px 4px}
+.lrow{display:flex;gap:10px;padding:6px 12px;font-size:.88rem;align-items:baseline}
+.lrow time{color:var(--muted);font-variant-numeric:tabular-nums;flex:none;min-width:3.4em}
+.lrow span{min-width:0;overflow-wrap:anywhere}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.75rem;background:var(--surface);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.doing{color:var(--accent2);border-color:var(--accent2)}
+.pill.done{color:var(--ok);border-color:var(--ok)}
+.pill.late{color:var(--danger);border-color:var(--danger)}
+.tcard{margin:0 6px 8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface2);display:flex;flex-direction:column;gap:8px}
+.tcard .tt{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.tcard .tt b{min-width:0;overflow-wrap:anywhere}
+.tcard small{color:var(--muted)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.prop{margin-top:6px;padding:8px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;color:var(--fg)}
+.prop small{color:var(--muted)}
+.scorebar{height:8px;border-radius:99px;background:var(--surface);overflow:hidden}
+.scorebar i{display:block;height:100%;background:var(--accent)}
+.navchips .chip{display:inline-flex;align-items:center}
+.navchips .badge{margin-inline-start:6px;min-width:18px;height:18px;font-size:.68rem}
+.ccard h2{font-size:1.05rem}
+.mrow{display:flex;flex-direction:column;gap:6px;margin:0 6px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+.mrow p{margin:0;overflow-wrap:anywhere}
+.mrow small{color:var(--muted)}
+.lbtn{color:var(--accent2);font-size:.82rem}
+.lbtn.dng{color:var(--danger)}
+
+/* ---------- sheets, toasts ---------- */
+.overlay{position:fixed;inset:0;background:rgba(5,5,12,.6);display:grid;place-items:center;padding:16px;z-index:20}
+.sheet{width:min(460px,100%);max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px}
+.sheet .hd{display:flex;align-items:center;justify-content:space-between}
+.sheet h2{font-size:1.2rem}
+.setrow{display:flex;flex-direction:column;gap:8px}
+.setrow>span{font-size:.85rem;color:var(--muted)}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.tg{width:48px;height:28px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);position:relative;flex:none}
+.tg::after{content:"";position:absolute;inset-block-start:3px;inset-inline-start:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .2s}
+.tg[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.tg[aria-checked="true"]::after{background:#fff;transform:translateX(calc(20px * var(--dir,1)))}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px}
+#toasts{position:fixed;inset-block-start:max(12px,env(safe-area-inset-top,0px));inset-inline:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:40;pointer-events:none;padding-inline:16px}
+.toast{pointer-events:auto;display:flex;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:10px 14px;box-shadow:var(--shadow);max-width:min(420px,100%);animation:in .25s ease}
+.toast.err{border-color:var(--danger)}
+@keyframes in{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+.typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-inline:1px;animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:820px){
+  .auth{grid-template-columns:1fr;align-content:start;padding-block:64px 24px}
+  .demo-thread{display:none}
+  .shell{grid-template-columns:1fr;border-inline:0}
+  .shell .main{display:none}
+  .shell[data-pane="chat"] .side{display:none}
+  .shell[data-pane="chat"] .main{display:flex}
+  .back{display:grid}
+  body{padding-left:0;padding-right:0}
+  .side-h,.search,.ch,.composer{padding-inline:max(14px,env(safe-area-inset-left,0px))}
+}
+</style>
+</head><body><div id="app"></div><div id="toasts"></div><div id="sheet"></div>
+<script type="module">
+/* Chat Chat — real accounts & chats on Firebase (Auth + Firestore). No secrets here: the web config is public by design;
+   protection comes from Firestore security rules. */
+const CFG = {
+  apiKey: "AIzaSyCtXyNim4pPGPkyJOW9zQmEqnlnKtbLtcw",
+  authDomain: "chat-chat-app-b3fd3.firebaseapp.com",
+  projectId: "chat-chat-app-b3fd3",
+  storageBucket: "chat-chat-app-b3fd3.firebasestorage.app",
+  messagingSenderId: "284766266907",
+  appId: "1:284766266907:web:ec52aac563347aa889babe"
+};
+const SDK = "https://www.gstatic.com/firebasejs/13.0.0/";
+
+/* ---------- Firebase adapter (the only place that touches Firebase) ---------- */
+async function realFB() {
+  const [A, Au, F] = await Promise.all([
+    import(SDK + "firebase-app.js"), import(SDK + "firebase-auth.js"), import(SDK + "firebase-firestore.js")
+  ]);
+  const app = A.initializeApp(CFG), auth = Au.getAuth(app), db = F.getFirestore(app);
+  const est = { serverTimestamps: "estimate" };
+  const ms = v => (v && v.toMillis ? v.toMillis() : (typeof v === "number" ? v : 0));
+  const U = uid => F.doc(db, "users", uid);
+  const msgCol = id => F.collection(db, "chats", id, "messages");
+  return {
+    onAuth: cb => Au.onAuthStateChanged(auth, u => cb(u ? { uid: u.uid, email: u.email } : null)),
+    signUp: async (e, p) => { const c = await Au.createUserWithEmailAndPassword(auth, e, p); return { uid: c.user.uid, email: c.user.email }; },
+    signIn: async (e, p) => { const c = await Au.signInWithEmailAndPassword(auth, e, p); return { uid: c.user.uid, email: c.user.email }; },
+    signOut: () => Au.signOut(auth),
+    dropAuthUser: async () => { if (auth.currentUser) await Au.deleteUser(auth.currentUser); },
+    reset: e => Au.sendPasswordResetEmail(auth, e),
+    getUser: async uid => { const s = await F.getDoc(U(uid)); return s.exists() ? s.data() : null; },
+    uidByName: async n => { const s = await F.getDoc(F.doc(db, "usernames", n)); return s.exists() ? s.data().uid : null; },
+    register: async (uid, username, prof) => {
+      const b = F.writeBatch(db);
+      b.set(U(uid), { username, name: prof.name, bio: "", avatar: "", createdAt: F.serverTimestamp() });
+      b.set(F.doc(db, "usernames", username), { uid });
+      await b.commit();
+    },
+    updateUser: (uid, f) => F.updateDoc(U(uid), f),
+    watchChats: (uid, cb, er) => F.onSnapshot(
+      F.query(F.collection(db, "chats"), F.where("members", "array-contains", uid)),
+      s => cb(s.docs.map(d => { const x = d.data(est); return { id: d.id, members: x.members, lastText: x.lastText || "", lastFrom: x.lastFrom || "", lastAt: ms(x.lastAt) }; })), er),
+    watchMsgs: (id, cb, er) => F.onSnapshot(
+      F.query(msgCol(id), F.orderBy("at"), F.limitToLast(150)),
+      s => cb(s.docs.map(d => { const x = d.data(est); return { id: d.id, from: x.from, text: x.text || "", img: x.img || "", at: ms(x.at), deleted: !!x.deleted }; })), er),
+    send: async (id, members, from, text, img) => {
+      await F.setDoc(F.doc(db, "chats", id), { members, lastAt: F.serverTimestamp(), lastText: (text || "📷").slice(0, 100), lastFrom: from }, { merge: true });
+      await F.addDoc(msgCol(id), { from, text: text || "", img: img || "", at: F.serverTimestamp(), deleted: false });
+    },
+    delMsg: (id, mid) => F.updateDoc(F.doc(db, "chats", id, "messages", mid), { deleted: true, text: "", img: "" }),
+    watchBlocks: (uid, cb, er) => F.onSnapshot(F.collection(db, "users", uid, "blocked"), s => cb(s.docs.map(d => d.id)), er),
+    block: (uid, o) => F.setDoc(F.doc(db, "users", uid, "blocked", o), { at: F.serverTimestamp() }),
+    unblock: (uid, o) => F.deleteDoc(F.doc(db, "users", uid, "blocked", o)),
+    watchMeta: (uid, col, cb, er) => F.onSnapshot(F.collection(db, "users", uid, col), s => { const m = {}; s.docs.forEach(d => { m[d.id] = ms(d.data(est).at); }); cb(m); }, er),
+    setMeta: (uid, col, id) => F.setDoc(F.doc(db, "users", uid, col, id), { at: F.serverTimestamp() })
+  };
+}
+
+/* ---------- i18n (ar | fr | en) ---------- */
+const T = {
+  tag: "تواصل بخصوصية|Discutez en privé|Chat in private",
+  tag2: "رسائل حقيقية بين الأصدقاء، بتصميم هادئ وداكن.|De vrais messages entre amis, dans un design sombre et calme.|Real messages between friends, in a calm dark design.",
+  login: "تسجيل الدخول|Connexion|Log in", register: "إنشاء حساب|Créer un compte|Sign up",
+  email: "البريد الإلكتروني|E-mail|Email", pass: "كلمة المرور (6 أحرف على الأقل)|Mot de passe (6 caractères min.)|Password (min. 6 characters)",
+  username: "اسم المستخدم|Nom d'utilisateur|Username", uph: "حروف إنجليزية صغيرة وأرقام (3–20)|lettres minuscules et chiffres (3–20)|lowercase letters & digits (3–20)",
+  dname: "الاسم الظاهر|Nom affiché|Display name", forgot: "نسيت كلمة المرور؟|Mot de passe oublié ?|Forgot password?",
+  resetSent: "أُرسل رابط إعادة التعيين إلى بريدك.|Lien de réinitialisation envoyé.|Reset link sent to your email.",
+  needEmail: "اكتب بريدك أولاً.|Saisissez d'abord votre e-mail.|Enter your email first.",
+  logout: "تسجيل الخروج|Se déconnecter|Log out", search: "ابحث في محادثاتك…|Rechercher…|Search your chats…",
+  newChat: "محادثة جديدة|Nouvelle discussion|New chat", find: "بحث|Chercher|Find",
+  findHint: "اكتب اسم مستخدم صديقك بالضبط.|Saisissez le nom d'utilisateur exact de votre ami.|Type your friend's exact username.",
+  notFound: "لا يوجد مستخدم بهذا الاسم.|Aucun utilisateur avec ce nom.|No user with that name.", self: "هذا حسابك أنت.|C'est votre compte.|That's your own account.",
+  start: "ابدأ المحادثة|Démarrer|Start chat", noChats: "لا محادثات بعد. اضغط + وابحث عن صديقك.|Aucune discussion. Appuyez sur + pour chercher un ami.|No chats yet. Tap + and find a friend.",
+  pick: "اختر محادثة|Choisissez une discussion|Pick a chat", typeMsg: "اكتب رسالة…|Écrire un message…|Type a message…",
+  send: "إرسال|Envoyer|Send", photo: "صورة|Photo|Photo", sayHi: "ابدأ بالسلام 👋|Dites bonjour 👋|Say hi 👋",
+  block: "حظر|Bloquer|Block", unblock: "إلغاء الحظر|Débloquer|Unblock",
+  blockQ: "حظر هذا المستخدم؟ لن يستطيع مراسلتك.|Bloquer cet utilisateur ? Il ne pourra plus vous écrire.|Block this user? They won't be able to message you.",
+  blockedNote: "حظرتَ هذا المستخدم.|Vous avez bloqué cet utilisateur.|You blocked this user.",
+  delMsg: "حذف الرسالة للجميع|Supprimer pour tous|Delete for everyone", gone: "تم حذف هذه الرسالة|Message supprimé|This message was deleted",
+  clear: "مسح المحادثة عندي|Effacer pour moi|Clear for me", clearQ: "مسح كل الرسائل من عندك فقط؟ ستبقى عند الطرف الآخر.|Effacer tous les messages chez vous seulement ? L'autre les garde.|Clear all messages for you only? The other person keeps them.",
+  delQ: "حذف هذه الرسالة عند الطرفين؟|Supprimer ce message pour les deux ?|Delete this message for both?",
+  settings: "الإعدادات|Paramètres|Settings", profile: "الملف الشخصي|Profil|Profile", lang: "اللغة|Langue|Language",
+  theme: "المظهر|Thème|Theme", dark: "داكن|Sombre|Dark", light: "فاتح|Clair|Light", auto: "تلقائي|Auto|Auto",
+  notif: "إشعارات الرسائل (والصفحة مفتوحة)|Notifications (page ouverte)|Message alerts (while the page is open)",
+  notifDenied: "المتصفح رفض الإشعارات. فعّلها من إعدادات الموقع.|Notifications refusées par le navigateur.|The browser denied notifications.",
+  notifNote: "التنبيه خارج المتصفح يحتاج خادم إشعارات، غير مفعّل بعد.|Les alertes hors navigateur nécessitent un serveur, pas encore actif.|Alerts outside the browser need a push server, not enabled yet.",
+  blockedList: "المحظورون|Bloqués|Blocked", none: "لا أحد|Personne|Nobody",
+  save: "حفظ|Enregistrer|Save", saved: "تم الحفظ|Enregistré|Saved", cancel: "إلغاء|Annuler|Cancel", ok: "تأكيد|Confirmer|Confirm", close: "إغلاق|Fermer|Close",
+  bio: "نبذة|Bio|Bio", changePhoto: "تغيير الصورة|Changer la photo|Change photo",
+  today: "اليوم|Aujourd'hui|Today", loading: "جارٍ التحميل…|Chargement…|Loading…",
+  conn: "تعذّر الاتصال بالخادم. تأكد من الإنترنت ثم أعد المحاولة.|Connexion impossible. Vérifiez Internet puis réessayez.|Can't reach the server. Check your internet and retry.",
+  retry: "إعادة المحاولة|Réessayer|Retry", sendFail: "تعذّر إرسال الرسالة.|Échec de l'envoi.|Couldn't send the message.",
+  errImg: "تعذّر قراءة الصورة.|Image illisible.|Couldn't read the image.", errType: "نوع الملف غير مدعوم.|Type non pris en charge.|Unsupported file type.",
+  eInUse: "هذا البريد مسجّل من قبل.|Cet e-mail est déjà utilisé.|That email is already registered.", eMail: "البريد غير صالح.|E-mail invalide.|Invalid email.",
+  eWeak: "كلمة المرور ضعيفة (6 أحرف على الأقل).|Mot de passe trop faible (6 min.).|Password too weak (min. 6).",
+  eCred: "البريد أو كلمة المرور غير صحيحين.|E-mail ou mot de passe incorrect.|Wrong email or password.",
+  eMany: "محاولات كثيرة. انتظر قليلاً.|Trop de tentatives. Patientez.|Too many attempts. Wait a bit.",
+  eOp: "تسجيل البريد/كلمة المرور غير مفعّل في Firebase.|Connexion e-mail désactivée dans Firebase.|Email/password sign-in is not enabled in Firebase.",
+  eDomain: "هذا العنوان غير مسموح في Firebase (Authorized domains).|Domaine non autorisé dans Firebase.|This domain isn't in Firebase Authorized domains.",
+  eUname: "اسم المستخدم غير صالح: حروف إنجليزية صغيرة وأرقام و _ و . (3–20).|Nom invalide : minuscules, chiffres, _ et . (3–20).|Invalid username: lowercase letters, digits, _ and . (3–20).",
+  eTaken: "اسم المستخدم محجوز، اختر غيره.|Nom d'utilisateur déjà pris.|Username already taken.",
+  eName: "اكتب اسماً ظاهراً.|Saisissez un nom affiché.|Enter a display name.",
+  ePerm: "غير مسموح بهذه العملية (قواعد الأمان).|Opération refusée (règles de sécurité).|Not allowed (security rules).",
+  eGen: "حدث خطأ غير متوقع.|Erreur inattendue.|Something went wrong.",
+  limits: "الصور تُصغَّر وتُحفظ داخل قاعدة البيانات. الردود بالذكاء الاصطناعي غير متاحة هنا.|Les images sont réduites et stockées dans la base. Pas d'IA ici.|Images are shrunk and stored in the database. No AI replies here.",
+  you: "أنت|Vous|You", sent: "الحالة|État|Status"
+};
+const LANGS = { ar: { i: 0, dir: "rtl", loc: "ar", n: "العربية" }, fr: { i: 1, dir: "ltr", loc: "fr", n: "Français" }, en: { i: 2, dir: "ltr", loc: "en", n: "English" } };
+const ICON = {
+  logo: '<svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="var(--accent)"/><path d="M11 13.5c0-1.4 1.1-2.5 2.5-2.5h9c1.4 0 2.5 1.1 2.5 2.5v6c0 1.4-1.1 2.5-2.5 2.5H18l-3.5 3v-3h-1c-1.4 0-2.5-1.1-2.5-2.5z" fill="#fff"/><path d="M27 17h1.5c1.4 0 2.5 1.1 2.5 2.5v5c0 1.4-1.1 2.5-2.5 2.5H27v2.5l-3-2.5h-4c-.9 0-1.7-.5-2.1-1.2" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  send: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>',
+  img: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-4.5-4.5L6 21"/></svg>',
+  back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:scaleX(var(--flip,1))"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+  gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>',
+  trash2: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>',
+  block: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
+  plus: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  chat: '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  close: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sget = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+const sset = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
+let lang = sget("cc_lang", ""); if (!LANGS[lang]) { const n = (navigator.language || "ar").slice(0, 2); lang = LANGS[n] ? n : "ar"; }
+let theme = sget("cc_theme", "auto");
+let notifOn = sget("cc_notif", "0") === "1";
+const t = k => { const p = (T[k] || k).split("|"); return p[LANGS[lang].i] || p[2]; };
+const COLORS = ["#6f5ff5", "#3b82f6", "#14a39a", "#c2527a", "#d97a2b", "#8a5cf6", "#2f9e6b"];
+const colorFor = s => { let h = 0; s = String(s || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return COLORS[h % COLORS.length]; };
+function avatar(p, cls) {
+  const nm = (p && (p.name || p.username)) || "?";
+  const inner = p && p.avatar ? '<img alt="" src="' + esc(p.avatar) + '">' : esc(nm.trim().replace(/^(ال|The |Le |La |L')/, "").charAt(0).toUpperCase() || "?");
+  return '<span class="av ' + (cls || "") + '" style="background:' + colorFor(p && p.username) + '">' + inner + "</span>";
+}
+const fmtTime = ts => new Date(ts).toLocaleTimeString(LANGS[lang].loc, { hour: "2-digit", minute: "2-digit" });
+const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); };
+const fmtDay = ts => dayKey(ts) === dayKey(Date.now()) ? t("today") : new Date(ts).toLocaleDateString(LANGS[lang].loc, { day: "numeric", month: "long" });
+function toast(msg, isErr, onclick) {
+  const el = document.createElement("div"); el.className = "toast" + (isErr ? " err" : ""); el.textContent = msg;
+  if (onclick) { el.style.cursor = "pointer"; el.addEventListener("click", () => { onclick(); el.remove(); }); }
+  $("#toasts").appendChild(el); setTimeout(() => el.remove(), 4200);
+}
+function applyLang() {
+  const d = document.documentElement, L = LANGS[lang];
+  d.lang = L.loc; d.dir = L.dir;
+  d.style.setProperty("--flip", L.dir === "rtl" ? "-1" : "1"); d.style.setProperty("--dir", L.dir === "rtl" ? "-1" : "1");
+  if (theme === "light" || theme === "dark") d.setAttribute("data-theme", theme); else d.removeAttribute("data-theme");
+}
+function fileToDataUrl(file, max, maxChars, cb) {
+  if (["image/jpeg", "image/png", "image/webp", "image/gif"].indexOf(file.type) < 0) { toast(t("errType"), true); return; }
+  const fr = new FileReader();
+  fr.onerror = () => toast(t("errImg"), true);
+  fr.onload = () => {
+    const im = new Image();
+    im.onerror = () => toast(t("errImg"), true);
+    im.onload = () => {
+      let size = max, q = 0.8, out = "";
+      for (let i = 0; i < 6; i++) {
+        const s = Math.min(1, size / Math.max(im.width, im.height));
+        const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s));
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        out = c.toDataURL("image/jpeg", q);
+        if (out.length <= maxChars) break;
+        size = Math.round(size * 0.8); q = Math.max(0.5, q - 0.08);
+      }
+      if (out.length > maxChars) { toast(t("errImg"), true); return; }
+      cb(out);
+    };
+    im.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function authErr(e) {
+  const c = (e && e.code) || "";
+  if (/email-already-in-use/.test(c)) return t("eInUse");
+  if (/invalid-email/.test(c)) return t("eMail");
+  if (/weak-password/.test(c)) return t("eWeak");
+  if (/invalid-credential|user-not-found|wrong-password|invalid-login/.test(c)) return t("eCred");
+  if (/too-many/.test(c)) return t("eMany");
+  if (/operation-not-allowed/.test(c)) return t("eOp");
+  if (/unauthorized-domain/.test(c)) return t("eDomain");
+  if (/network/.test(c)) return t("conn");
+  if (/permission-denied/.test(c)) return t("ePerm");
+  return t("eGen");
+}
+
+/* ---------- state ---------- */
+let FB = null, me = null, chats = [], blocks = [], reads = {}, cleared = {}, msgs = [];
+let active = null;                 // {id, other}
+const prof = {}, asked = {};
+let unsub = [], unsubMsgs = null, registering = false, firstChats = true;
+const seenAt = {};
+const chatIdOf = (a, b) => (a < b ? a + "_" + b : b + "_" + a);
+const otherOf = c => c.members[0] === me.uid ? c.members[1] : c.members[0];
+
+function need(uid) {
+  if (prof[uid] || asked[uid]) return;
+  asked[uid] = 1;
+  FB.getUser(uid).then(p => { prof[uid] = p || { username: "?", name: "?", avatar: "" }; renderList(); renderHead(); renderMsgs(); }).catch(() => { delete asked[uid]; });
+}
+
+/* ---------- auth screen ---------- */
+function langSeg() {
+  return '<div class="seg" role="group" aria-label="' + t("lang") + '">' + Object.keys(LANGS).map(k =>
+    '<button type="button" data-act="lang" data-v="' + k + '" aria-pressed="' + (k === lang) + '">' + LANGS[k].n + "</button>").join("") + "</div>";
+}
+let authMode = "login";
+function renderAuth(msg) {
+  const reg = authMode === "register";
+  $("#app").innerHTML =
+    '<div class="topbar">' + langSeg() + "</div>" +
+    '<div class="auth"><section class="hero"><div class="brand">' + ICON.logo + "<b>Chat Chat</b></div>" +
+    "<h1><span>" + esc(t("tag")) + "</span></h1><p>" + esc(t("tag2")) + "</p>" +
+    '<div class="demo-thread" aria-hidden="true"><div class="b in">👋</div><div class="b out">Chat Chat 💜</div></div></section>' +
+    '<section class="card"><div class="seg" role="tablist">' +
+    '<button type="button" data-act="mode" data-v="login" aria-pressed="' + !reg + '">' + t("login") + "</button>" +
+    '<button type="button" data-act="mode" data-v="register" aria-pressed="' + reg + '">' + t("register") + "</button></div>" +
+    '<form class="stack" id="auth-form" novalidate>' +
+    (reg ? '<label class="f" for="a-name">' + t("dname") + '<input class="inp" id="a-name" maxlength="40" autocomplete="name"></label>' +
+      '<label class="f" for="a-user">' + t("username") + '<input class="inp" id="a-user" maxlength="20" dir="ltr" autocomplete="username" autocapitalize="none" placeholder="' + esc(t("uph")) + '"></label>' : "") +
+    '<label class="f" for="a-email">' + t("email") + '<input class="inp" id="a-email" type="email" dir="ltr" autocomplete="email"></label>' +
+    '<label class="f" for="a-pass">' + t("pass") + '<input class="inp" id="a-pass" type="password" dir="ltr" autocomplete="' + (reg ? "new-password" : "current-password") + '"></label>' +
+    '<p class="err" id="a-err" role="alert">' + esc(msg || "") + "</p>" +
+    '<button class="btn" type="submit" id="a-go">' + (reg ? t("register") : t("login")) + "</button>" +
+    (reg ? "" : '<button class="link" type="button" data-act="forgot">' + t("forgot") + "</button>") +
+    "</form></section></div>";
+}
+async function submitAuth() {
+  const reg = authMode === "register", err = $("#a-err"), go = $("#a-go");
+  const email = $("#a-email").value.trim(), pass = $("#a-pass").value;
+  const name = reg ? $("#a-name").value.trim() : "", user = reg ? $("#a-user").value.trim().toLowerCase() : "";
+  if (reg) {
+    if (!name) { err.textContent = t("eName"); return; }
+    if (!/^[a-z0-9_.]{3,20}$/.test(user)) { err.textContent = t("eUname"); return; }
+  }
+  if (!email) { err.textContent = t("eMail"); return; }
+  if (pass.length < 6) { err.textContent = t("eWeak"); return; }
+  err.textContent = ""; go.disabled = true;
+  try {
+    if (reg) {
+      registering = true;
+      const u = await FB.signUp(email, pass);
+      try { await FB.register(u.uid, user, { name }); }
+      catch (e) { try { await FB.dropAuthUser(); } catch (x) { } registering = false; throw Object.assign(e, { __taken: /permission|already-exists/.test(e.code || "") }); }
+      registering = false;
+      await boot(u);
+    } else {
+      await FB.signIn(email, pass);   // onAuth -> boot
+    }
+  } catch (e) {
+    registering = false; go.disabled = false;
+    err.textContent = e && e.__taken ? t("eTaken") : authErr(e);
+  }
+}
+
+/* ---------- app shell ---------- */
+async function boot(u) {
+  if (me && me.uid === u.uid) return;
+  const p = await FB.getUser(u.uid);
+  if (!p) { await FB.signOut(); renderAuth(t("eGen")); return; }
+  me = Object.assign({ uid: u.uid, email: u.email }, p); prof[u.uid] = p;
+  chats = []; blocks = []; reads = {}; cleared = {}; active = null; firstChats = true;
+  renderShell();
+  const er = e => { if (e && e.code === "permission-denied") toast(t("ePerm"), true); };
+  unsub.push(FB.watchChats(me.uid, list => { chats = list; chatsChanged(); }, er));
+  unsub.push(FB.watchBlocks(me.uid, l => { blocks = l; renderList(); renderMain(); }, er));
+  unsub.push(FB.watchMeta(me.uid, "reads", m => { reads = m; renderList(); }, er));
+  unsub.push(FB.watchMeta(me.uid, "cleared", m => { cleared = m; renderList(); renderMsgs(); }, er));
+}
+function teardown() {
+  unsub.forEach(f => { try { f(); } catch (e) { } }); unsub = [];
+  if (unsubMsgs) { try { unsubMsgs(); } catch (e) { } unsubMsgs = null; }
+  me = null; chats = []; active = null; msgs = []; authMode = "login";
+}
+function renderShell() {
+  $("#app").innerHTML =
+    '<div class="shell" id="shell" data-pane="list"><aside class="side">' +
+    '<div class="side-h"><div class="brand">' + ICON.logo + "<b>Chat Chat</b></div>" +
+    '<button class="ib" data-act="new" aria-label="' + t("newChat") + '">' + ICON.plus + "</button>" +
+    '<button class="ib" data-act="avatar" aria-label="' + t("profile") + '">' + avatar(me, "sm") + "</button>" +
+    '<button class="ib" data-act="settings" aria-label="' + t("settings") + '">' + ICON.gear + "</button></div>" +
+    '<div class="search"><input class="inp" id="q" type="search" placeholder="' + esc(t("search")) + '"></div>' +
+    '<div class="list" id="list"></div></aside><main class="main" id="main"></main></div>';
+  renderList(); renderMain(true);
+}
+function visibleChats() {
+  return chats.filter(c => !(cleared[c.id] && cleared[c.id] >= c.lastAt)).sort((a, b) => b.lastAt - a.lastAt);
+}
+function isUnread(c) { return c.lastFrom && c.lastFrom !== me.uid && c.lastAt > (reads[c.id] || 0) && !(active && active.id === c.id); }
+function renderList() {
+  const el = $("#list"); if (!el) return;
+  const q = ($("#q") && $("#q").value || "").trim().toLowerCase();
+  let html = "";
+  visibleChats().forEach(c => {
+    const o = otherOf(c); need(o);
+    const p = prof[o] || { username: "…", name: "…" };
+    if (q && (p.name + " " + p.username).toLowerCase().indexOf(q) < 0) return;
+    html += '<button class="row" data-act="open" data-v="' + esc(o) + '" aria-current="' + !!(active && active.other === o) + '">' + avatar(p) +
+      '<span class="mid"><span class="nm"><span>' + esc(p.name) + "</span><small>" + (c.lastAt ? fmtTime(c.lastAt) : "") + "</small></span>" +
+      '<span class="pv"><span>' + (c.lastFrom === me.uid ? esc(t("you")) + ": " : "") + esc(c.lastText) + "</span>" +
+      (isUnread(c) ? '<span class="badge">●</span>' : "") + "</span></span></button>";
+  });
+  el.innerHTML = html || '<div class="empty">' + ICON.chat + "<p>" + esc(t("noChats")) + "</p></div>";
+}
+function renderHead() {
+  const el = $("#chhead"); if (!el || !active) return;
+  const p = prof[active.other] || { username: "…", name: "…" }, isB = blocks.indexOf(active.other) >= 0;
+  el.innerHTML = '<button class="ib back" data-act="back" aria-label="' + t("close") + '">' + ICON.back + "</button>" + avatar(p, "sm") +
+    '<div class="who"><b>' + esc(p.name) + '</b><span dir="ltr">@' + esc(p.username) + "</span></div>" +
+    '<button class="ib" data-act="clear" aria-label="' + t("clear") + '" title="' + esc(t("clear")) + '">' + ICON.trash2 + "</button>" +
+    '<button class="ib" data-act="' + (isB ? "unblock" : "blockAsk") + '" aria-label="' + t(isB ? "unblock" : "block") + '" title="' + esc(t(isB ? "unblock" : "block")) + '">' + ICON.block + "</button>";
+}
+function renderMain(force) {
+  const main = $("#main"); if (!main) return;
+  const sh = $("#shell");
+  if (!active) {
+    sh.dataset.pane = "list";
+    main.innerHTML = '<div class="empty">' + ICON.chat + "<h2>" + esc(t("pick")) + "</h2></div>"; return;
+  }
+  sh.dataset.pane = "chat";
+  const isB = blocks.indexOf(active.other) >= 0;
+  if (!force && main.dataset.chat === active.other && main.dataset.b === String(isB)) return;
+  main.dataset.chat = active.other; main.dataset.b = String(isB);
+  const keep = $("#cmp") ? $("#cmp").value : "";
+  main.innerHTML = '<div class="ch" id="chhead"></div><div class="msgs" id="msgs" aria-live="polite"></div>' +
+    (isB ? '<div class="blockednote"><span>' + esc(t("blockedNote")) + '</span><button class="btn sm" data-act="unblock">' + t("unblock") + "</button></div>" :
+      '<div class="composer"><input type="file" id="pic" accept="image/jpeg,image/png,image/webp,image/gif" hidden>' +
+      '<button class="ib" data-act="pick" aria-label="' + t("photo") + '">' + ICON.img + "</button>" +
+      '<textarea id="cmp" rows="1" placeholder="' + esc(t("typeMsg")) + '"></textarea>' +
+      '<button class="send" data-act="send" aria-label="' + t("send") + '">' + ICON.send + "</button></div>");
+  if ($("#cmp")) $("#cmp").value = keep;
+  renderHead(); renderMsgs(true);
+}
+function renderMsgs(stick) {
+  const el = $("#msgs"); if (!el || !active) return;
+  const near = stick || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  const clr = cleared[active.id] || 0;
+  const list = msgs.filter(m => m.at > clr);
+  let html = "", last = "";
+  if (!list.length) html = '<div class="sysmsg">' + esc(t("sayHi")) + "</div>";
+  list.forEach(m => {
+    const k = dayKey(m.at || Date.now());
+    if (k !== last) { html += '<div class="sysmsg">' + esc(fmtDay(m.at || Date.now())) + "</div>"; last = k; }
+    const mine = m.from === me.uid;
+    html += '<div class="m ' + (mine ? "out" : "in") + '"><div class="bub' + (m.deleted ? " gone" : "") + '">' +
+      (m.deleted ? esc(t("gone")) : (m.img ? '<img class="pic" alt="" src="' + esc(m.img) + '">' : "") + (m.text ? "<div>" + esc(m.text).replace(/\n/g, "<br>") + "</div>" : "")) +
+      '<div class="tm"><span>' + fmtTime(m.at || Date.now()) + "</span>" +
+      (mine && !m.deleted ? '<button data-act="delmsg" data-v="' + esc(m.id) + '" aria-label="' + t("delMsg") + '" title="' + esc(t("delMsg")) + '">' + ICON.trash + "</button>" : "") +
+      "</div></div></div>";
+  });
+  el.innerHTML = html;
+  if (near) el.scrollTop = el.scrollHeight;
+}
+let msgsOk = false;
+function subscribeMsgs() {
+  if (unsubMsgs) { try { unsubMsgs(); } catch (e) { } unsubMsgs = null; }
+  if (!active) return;
+  const id = active.id; msgsOk = true;
+  unsubMsgs = FB.watchMsgs(id, list => {
+    if (!active || active.id !== id) return;
+    msgs = list; renderMsgs();
+    if (list.length && !document.hidden) markRead(id);
+  }, () => { if (active && active.id === id) msgsOk = false; });   // new chat (no doc yet): retried when the chat appears
+}
+function openChat(other) {
+  if (prof[other]) { const keepP = prof[other]; delete asked[other]; FB.getUser(other).then(p => { if (p) { prof[other] = p; renderList(); renderHead(); renderMsgs(); } }).catch(() => { prof[other] = keepP; }); } else need(other);
+  const id = chatIdOf(me.uid, other);
+  if (active && active.id === id) { renderMain(); return; }
+  active = { id, other }; msgs = [];
+  renderMain(true); renderList();
+  subscribeMsgs(); markRead(id);
+}
+let readTimer = null;
+function markRead(id) {
+  const c = chats.find(x => x.id === id); if (!c) return;
+  if (reads[id] && reads[id] >= c.lastAt) return;
+  clearTimeout(readTimer); readTimer = setTimeout(() => { FB.setMeta(me.uid, "reads", id).catch(() => { }); }, 400);
+}
+function chatsChanged() {
+  chats.forEach(c => {
+    const o = otherOf(c); need(o);
+    const prev = seenAt[c.id] || 0;
+    if (!firstChats && c.lastAt > prev && c.lastFrom && c.lastFrom !== me.uid && blocks.indexOf(o) < 0) {
+      const visible = active && active.id === c.id && !document.hidden;
+      if (!visible) {
+        const p = prof[o] || { name: "…" };
+        toast(p.name + ": " + c.lastText, false, () => openChat(o));
+        if (notifOn && document.hidden && window.Notification && Notification.permission === "granted") {
+          try { new Notification(p.name, { body: c.lastText, tag: c.id }); } catch (e) { }
+        }
+      }
+    }
+    seenAt[c.id] = Math.max(prev, c.lastAt);
+  });
+  firstChats = false;
+  if (active) { const c = chats.find(x => x.id === active.id); if (c) { markRead(c.id); if (!msgsOk) subscribeMsgs(); } }
+  renderList();
+}
+async function sendMsg(img) {
+  if (!active) return;
+  const ta = $("#cmp"), text = (ta && ta.value || "").trim();
+  if (!text && !img) return;
+  const members = [me.uid, active.other].sort();
+  if (ta) { ta.value = ""; ta.style.height = ""; }
+  try { await FB.send(active.id, members, me.uid, text, img || ""); }
+  catch (e) { if (ta && !ta.value) ta.value = text; toast(e && e.code === "permission-denied" ? t("sendFail") : (/network|unavailable/.test((e && e.code) || "") ? t("conn") : t("sendFail")), true); }
+}
+
+/* ---------- sheets ---------- */
+function openSheet(html) {
+  const s = $("#sheet");
+  s.innerHTML = '<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">' + html + "</div></div>";
+  const f = s.querySelector("input,button.btn,button"); if (f) f.focus();
+}
+const closeSheet = () => { $("#sheet").innerHTML = ""; };
+const head = title => '<div class="hd"><h2>' + title + '</h2><button class="ib" data-act="close" aria-label="' + t("close") + '">' + ICON.close + "</button></div>";
+let askCb = null;
+function ask(title, text, okLabel, cb, danger) {
+  askCb = cb;
+  openSheet(head(esc(title)) + '<p style="margin:0;color:var(--muted)">' + esc(text) + "</p>" +
+    '<div class="btnrow"><button class="btn' + (danger ? " danger" : "") + '" data-act="askok">' + esc(okLabel) + '</button><button class="btn ghost" data-act="close">' + t("cancel") + "</button></div>");
+}
+function newChatSheet() {
+  openSheet(head(t("newChat")) + '<p class="note" style="margin:0">' + esc(t("findHint")) + "</p>" +
+    '<form id="find-form" class="stack" style="margin:0"><input class="inp" id="f-user" dir="ltr" autocapitalize="none" placeholder="@username" maxlength="21">' +
+    '<p class="err" id="f-err" role="alert"></p><div id="f-res"></div><button class="btn" type="submit">' + t("find") + "</button></form>");
+}
+async function doFind() {
+  const err = $("#f-err"), res = $("#f-res"); res.innerHTML = ""; err.textContent = "";
+  const n = $("#f-user").value.trim().replace(/^@/, "").toLowerCase();
+  if (!/^[a-z0-9_.]{3,20}$/.test(n)) { err.textContent = t("notFound"); return; }
+  try {
+    const uid = await FB.uidByName(n);
+    if (!uid) { err.textContent = t("notFound"); return; }
+    if (uid === me.uid) { err.textContent = t("self"); return; }
+    const p = await FB.getUser(uid); if (!p) { err.textContent = t("notFound"); return; }
+    prof[uid] = p;
+    res.innerHTML = '<div class="row" style="cursor:default">' + avatar(p) + '<span class="mid"><span class="nm"><span>' + esc(p.name) + '</span></span><span class="pv" dir="ltr">@' + esc(p.username) + "</span></span>" +
+      '<button type="button" class="btn sm" data-act="startchat" data-v="' + esc(uid) + '">' + t("start") + "</button></div>";
+  } catch (e) { err.textContent = authErr(e); }
+}
+function profileSheet() {
+  openSheet(head(t("profile")) + '<div class="center" id="p-av">' + avatar(me, "lg") + '<label class="btn ghost sm" for="p-file" style="cursor:pointer">' + t("changePhoto") + '</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></div>' +
+    '<label class="f" for="p-name">' + t("dname") + '<input class="inp" id="p-name" maxlength="40" value="' + esc(me.name) + '"></label>' +
+    '<label class="f">' + t("username") + '<input class="inp" value="@' + esc(me.username) + '" dir="ltr" disabled></label>' +
+    '<label class="f" for="p-bio">' + t("bio") + '<input class="inp" id="p-bio" maxlength="80" value="' + esc(me.bio || "") + '"></label>' +
+    '<p class="err" id="p-err" role="alert"></p><button class="btn" data-act="saveprofile">' + t("save") + "</button>");
+}
+async function saveProfile() {
+  const name = $("#p-name").value.trim(), bio = $("#p-bio").value.trim();
+  if (!name) { $("#p-err").textContent = t("eName"); return; }
+  const patch = { name, bio, avatar: me.avatar || "" };
+  try { await FB.updateUser(me.uid, patch); Object.assign(me, patch); prof[me.uid] = Object.assign({}, prof[me.uid], patch); toast(t("saved")); closeSheet(); renderShell(); if (active) { const o = active.other; active = null; openChat(o); } }
+  catch (e) { $("#p-err").textContent = authErr(e); }
+}
+function settingsSheet() {
+  const bl = blocks.map(uid => { need(uid); const p = prof[uid] || { name: "…", username: "…" };
+    return '<div class="row" style="cursor:default">' + avatar(p, "sm") + '<span class="mid"><span class="nm"><span>' + esc(p.name) + '</span></span><span class="pv" dir="ltr">@' + esc(p.username) + '</span></span><button class="btn ghost sm" data-act="unblockid" data-v="' + esc(uid) + '">' + t("unblock") + "</button></div>"; }).join("");
+  openSheet(head(t("settings")) +
+    '<div class="setrow"><span>' + t("lang") + "</span>" + langSeg() + "</div>" +
+    '<div class="setrow"><span>' + t("theme") + '</span><div class="seg">' + ["auto", "dark", "light"].map(k => '<button type="button" data-act="theme" data-v="' + k + '" aria-pressed="' + (theme === k) + '">' + t(k) + "</button>").join("") + "</div></div>" +
+    '<div class="switch"><span>' + t("notif") + '</span><button class="tg" role="switch" data-act="notif" aria-checked="' + notifOn + '" aria-label="' + esc(t("notif")) + '"></button></div>' +
+    '<p class="note" style="margin:0">' + esc(t("notifNote")) + "</p>" +
+    '<div class="setrow"><span>' + t("blockedList") + "</span>" + (bl || '<p class="note" style="margin:0">' + t("none") + "</p>") + "</div>" +
+    '<p class="note" style="margin:0">' + esc(t("limits")) + "</p>" +
+    '<button class="btn danger" data-act="logout">' + t("logout") + "</button>");
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act, v = b.dataset.v;
+  if (a === "overlay") { if (ev.target === b) closeSheet(); return; }
+  switch (a) {
+    case "close": closeSheet(); break;
+    case "lang": lang = v; sset("cc_lang", v); applyLang(); if (me) { renderShell(); settingsSheet(); if (active) { const o = active.other; active = null; openChat(o); } } else renderAuth(); break;
+    case "mode": authMode = v; renderAuth(); break;
+    case "forgot": {
+      const e = $("#a-email").value.trim(); if (!e) { $("#a-err").textContent = t("needEmail"); break; }
+      try { await FB.reset(e); toast(t("resetSent")); } catch (x) { $("#a-err").textContent = authErr(x); } break; }
+    case "new": newChatSheet(); break;
+    case "startchat": closeSheet(); openChat(v); break;
+    case "open": openChat(v); break;
+    case "back": active = null; msgsOk = false; if (unsubMsgs) { try { unsubMsgs(); } catch (e) { } unsubMsgs = null; } renderMain(true); renderList(); break;
+    case "send": sendMsg(); break;
+    case "pick": $("#pic").click(); break;
+    case "delmsg": ask(t("delMsg"), t("delQ"), t("ok"), async () => { try { await FB.delMsg(active.id, v); } catch (e) { toast(t("ePerm"), true); } }, true); break;
+    case "blockAsk": ask(t("block"), t("blockQ"), t("block"), async () => { try { await FB.block(me.uid, active.other); } catch (e) { toast(authErr(e), true); } }, true); break;
+    case "unblock": try { await FB.unblock(me.uid, active.other); } catch (e) { toast(authErr(e), true); } break;
+    case "unblockid": try { await FB.unblock(me.uid, v); b.closest(".row").remove(); } catch (e) { toast(authErr(e), true); } break;
+    case "clear": ask(t("clear"), t("clearQ"), t("ok"), async () => { try { await FB.setMeta(me.uid, "cleared", active.id); } catch (e) { toast(authErr(e), true); } }, true); break;
+    case "askok": { const f = askCb; askCb = null; closeSheet(); if (f) f(); break; }
+    case "avatar": profileSheet(); break;
+    case "saveprofile": saveProfile(); break;
+    case "settings": settingsSheet(); break;
+    case "theme": theme = v; sset("cc_theme", v); applyLang(); settingsSheet(); break;
+    case "notif": {
+      if (!notifOn) {
+        if (!window.Notification) { toast(t("notifDenied"), true); break; }
+        const p = await Notification.requestPermission();
+        if (p !== "granted") { toast(t("notifDenied"), true); break; }
+      }
+      notifOn = !notifOn; sset("cc_notif", notifOn ? "1" : "0"); settingsSheet(); break; }
+    case "logout": closeSheet(); await FB.signOut(); break;
+    case "retry": start(); break;
+  }
+});
+document.addEventListener("submit", ev => {
+  ev.preventDefault();
+  if (ev.target.id === "auth-form") submitAuth();
+  if (ev.target.id === "find-form") doFind();
+});
+document.addEventListener("input", ev => {
+  if (ev.target.id === "q") renderList();
+  if (ev.target.id === "cmp") { const e = ev.target; e.style.height = "auto"; e.style.height = Math.min(120, e.scrollHeight) + "px"; }
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape") closeSheet();
+  if (ev.target.id === "cmp" && ev.key === "Enter" && !ev.shiftKey && !matchMedia("(pointer:coarse)").matches) { ev.preventDefault(); sendMsg(); }
+});
+document.addEventListener("change", ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (ev.target.id === "pic" && f) { fileToDataUrl(f, 800, 280000, d => sendMsg(d)); ev.target.value = ""; }
+  if (ev.target.id === "p-file" && f) fileToDataUrl(f, 160, 55000, d => { me.avatar = d; $("#p-av").firstChild.outerHTML = avatar(me, "lg"); });
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden && active) { const c = chats.find(x => x.id === active.id); if (c) markRead(c.id); } });
+
+/* ---------- start ---------- */
+async function start() {
+  applyLang();
+  $("#app").innerHTML = '<div class="empty"><p>' + esc(t("loading")) + "</p></div>";
+  try { FB = window.__FB_MOCK || await realFB(); }
+  catch (e) { $("#app").innerHTML = '<div class="empty">' + ICON.chat + "<p>" + esc(t("conn")) + '</p><button class="btn" data-act="retry">' + t("retry") + "</button></div>"; return; }
+  let first = true;
+  FB.onAuth(async u => {
+    if (registering) return;
+    if (!u) { teardown(); if (!$("#auth-form")) renderAuth(); first = false; return; }
+    first = false;
+    try { await boot(u); } catch (e) { renderAuth(authErr(e)); }
+  });
+}
+start();
+
+</script></body></html>
