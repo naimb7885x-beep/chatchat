@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b10">
+<title>Chat Chat</title>
+<style>
+:root{--bg:#090b10;--panel:#11151e;--panel2:#171d29;--line:#252d3b;--text:#f3f5fa;--muted:#929bad;--accent:#7c5cff;--accent2:#24c6a4;--bubble:#242b3a;--radius:18px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#252044 0,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;color:inherit}.app{max-width:1400px;margin:auto;min-height:100vh;display:grid;grid-template-columns:245px 1fr;gap:18px;padding:18px}
+.sidebar,.main,.right{background:rgba(17,21,30,.94);border:1px solid var(--line);border-radius:24px}.sidebar{padding:20px;display:flex;flex-direction:column;gap:20px;height:calc(100vh - 36px);position:sticky;top:18px}
+.brand{display:flex;align-items:center;gap:10px;font-size:23px;font-weight:850;letter-spacing:-1px}.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#8b5cf6,#24c6a4);display:grid;place-items:center;font-weight:900;color:white}
+.nav{display:grid;gap:7px}.nav button{background:transparent;text-align:right;padding:12px 14px;border-radius:13px;color:var(--muted);display:flex;gap:12px;align-items:center}.nav button.active,.nav button:hover{background:#25213c;color:#fff}.nav .ico{width:23px;text-align:center;font-size:18px}
+.user-mini{margin-top:auto;padding:12px;background:var(--panel2);border-radius:16px;display:flex;align-items:center;gap:10px}.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6658e8,#25bfa2);display:grid;place-items:center;font-weight:800;flex-shrink:0;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}.user-mini small,.muted{color:var(--muted)}
+.main{padding:24px;min-width:0;min-height:calc(100vh - 36px)}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}.top h1{font-size:25px;margin:0}.top-actions{display:flex;gap:8px}.btn{background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:12px}.btn.primary{background:linear-gradient(135deg,#7656f5,#5942c9);border:0}.btn.green{background:#123d36;color:#7ef0d5}.btn.danger{background:#421f2b;color:#ff9bb1}.btn.small{padding:7px 10px;font-size:13px}.page{display:none}.page.active{display:block}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:17px;margin-bottom:14px}.row{display:flex;align-items:center;gap:12px}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.field{width:100%;background:#0c1018;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;outline:none}.field:focus{border-color:var(--accent)}textarea.field{min-height:90px;resize:vertical}.section-title{font-size:17px;margin:4px 0 13px}.stories{display:flex;gap:13px;overflow:auto;padding:5px 0 15px}.story{min-width:72px;text-align:center;cursor:pointer}.story-ring{width:62px;height:62px;padding:3px;border-radius:50%;background:linear-gradient(135deg,#9b67ff,#20d6a8);margin:auto auto 7px}.story-ring .avatar{width:100%;height:100%;border:3px solid var(--panel)}.story small{color:var(--muted)}
+.chat-layout{display:grid;grid-template-columns:minmax(220px, .8fr) minmax(280px,1.5fr);gap:14px;min-height:560px}.chat-list,.chat-window{background:#0c1018;border:1px solid var(--line);border-radius:17px;overflow:hidden}.chat-list{padding:12px}.chat-person{display:flex;gap:10px;align-items:center;padding:12px;border-radius:13px;cursor:pointer}.chat-person.active,.chat-person:hover{background:var(--panel2)}.chat-person .details{flex:1;min-width:0}.chat-person strong,.chat-person small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chat-person small{color:var(--muted);margin-top:3px}.chat-window{display:flex;flex-direction:column}.chat-head{padding:13px;border-bottom:1px solid var(--line)}.messages{padding:15px;display:flex;flex-direction:column;gap:12px;flex:1;max-height:420px;overflow:auto}.bubble{max-width:82%;background:var(--bubble);padding:11px 13px;border-radius:16px 16px 5px 16px;align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:#44347d;border-radius:16px 16px 16px 5px}.bubble .reacts{display:flex;gap:5px;margin-top:7px}.reaction{background:#111723;border:1px solid #3a4354;border-radius:20px;padding:3px 7px;font-size:12px}.chat-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px}.chat-compose input{flex:1;min-width:0}.post{padding:17px}.post-head{display:flex;gap:10px;align-items:center}.post-body{line-height:1.8;margin:14px 0}.post-actions{display:flex;gap:8px;flex-wrap:wrap}.pill{font-size:12px;color:#aeb8ca;background:#222a38;border-radius:30px;padding:5px 9px}.stat{font-size:27px;font-weight:800}.notice{padding:12px;border-radius:12px;background:#191f2b;margin:8px 0}.badge-frame{outline:3px solid #f4c45e;outline-offset:2px}.hidden{display:none!important}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#202839;border:1px solid #3b4960;padding:12px 18px;border-radius:14px;z-index:20;box-shadow:0 10px 35px #0008}
+.modal-back{position:fixed;inset:0;background:#0009;display:none;place-items:center;padding:18px;z-index:15}.modal-back.show{display:grid}.modal{width:min(500px,100%);background:#121824;border:1px solid var(--line);border-radius:20px;padding:20px;max-height:85vh;overflow:auto}.modal h3{margin-top:0}.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.tiny{font-size:12px;color:var(--muted)}.setting{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.switch{accent-color:var(--accent);width:19px;height:19px}.feed-image{width:100%;max-height:280px;object-fit:cover;border-radius:14px;margin-top:10px}
+@media(max-width:850px){.app{grid-template-columns:1fr;padding:9px;gap:9px}.sidebar{height:auto;position:static;padding:12px;flex-direction:row;align-items:center;overflow:auto}.brand{font-size:18px}.logo{width:35px;height:35px}.nav{display:flex;gap:3px}.nav button{padding:10px}.nav button .nav-label{display:none}.user-mini{display:none}.main{padding:15px;min-height:80vh}.chat-layout{grid-template-columns:1fr}.chat-list{max-height:210px;overflow:auto}.chat-window{min-height:430px}.top h1{font-size:21px}}
+@media(max-width:430px){.sidebar{gap:8px}.nav button{padding:9px}.top{align-items:flex-start;flex-direction:column}.top-actions{width:100%}.top-actions .btn{flex:1}.main{padding:12px}.grid{grid-template-columns:1fr 1fr}.stat{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+ <div class="brand"><div class="logo">CC</div><span>Chat Chat</span></div>
+ <nav class="nav" id="nav">
+  <button class="active" data-page="home"><span class="ico">⌂</span><span class="nav-label">الرئيسية</span></button>
+  <button data-page="chats"><span class="ico">▤</span><span class="nav-label">المحادثات</span></button>
+  <button data-page="feed"><span class="ico">▧</span><span class="nav-label">المنشورات</span></button>
+  <button data-page="alerts"><span class="ico">♧</span><span class="nav-label">الإشعارات</span></button>
+  <button data-page="profile"><span class="ico">◎</span><span class="nav-label">ملفي الشخصي</span></button>
+  <button data-page="settings"><span class="ico">⚙</span><span class="nav-label">الإعدادات</span></button>
+ </nav>
+ <div class="user-mini"><div class="avatar" id="miniAvatar">ن</div><div><b id="miniName">نعيم</b><br><small>حساب تجريبي محلي</small></div></div>
+</aside>
+<main class="main">
+ <div class="top"><h1 id="pageTitle">الرئيسية</h1><div class="top-actions"><button class="btn" onclick="openSearch()">⌕ بحث</button><button class="btn primary" onclick="toast('هذه نسخة محلية تجريبية')">＋ جديد</button></div></div>
+
+ <section class="page active" id="home">
+  <div class="card"><div class="row between"><div><h2 style="margin:0 0 5px">أهلاً بك في Chat Chat 👋</h2><span class="muted">مساحتك للتواصل ومشاركة اللحظات.</span></div><div class="pill">نسخة تجريبية</div></div></div>
+  <h3 class="section-title">القصص</h3><div class="stories" id="storyStrip"></div>
+  <div class="grid">
+   <div class="card"><div class="muted">مستواك</div><div class="stat" id="levelStat">المستوى 1</div><div class="tiny" id="xpStat">0 نقطة</div></div>
+   <div class="card"><div class="muted">الأصدقاء المفضلون</div><div class="stat" id="favStat">0</div><div class="tiny">يمكنك تثبيت أصدقائك</div></div>
+   <div class="card"><div class="muted">الإشعارات</div><div class="stat" id="alertStat">0</div><div class="tiny">تحديثاتك الأخيرة</div></div>
+  </div>
+  <div class="card"><h3 class="section-title">إنشاء منشور</h3><textarea id="quickPost" class="field" placeholder="بماذا تفكر؟"></textarea><div class="row between" style="margin-top:10px"><span class="tiny">شارك فكرة أو تحديثًا مع المجتمع</span><button class="btn primary" onclick="publishPost()">نشر</button></div></div>
+  <h3 class="section-title">آخر المنشورات</h3><div id="homePosts"></div>
+ </section>
+
+ <section class="page" id="chats">
+  <div class="chat-layout">
+   <div class="chat-list"><input class="field" id="chatFilter" placeholder="ابحث في المحادثات..." oninput="renderChatList()"><div id="chatList"></div><button class="btn" style="width:100%;margin-top:8px" onclick="toast('إضافة مستخدمين حقيقيين تتطلب قاعدة بيانات')">＋ محادثة جديدة</button></div>
+   <div class="chat-window"><div class="chat-head row between"><div class="row"><div class="avatar" id="chatAvatar">س</div><div><b id="chatName">سارة</b><div class="tiny" id="chatPresence">● متصلة (تجريبي)</div></div></div><button class="btn small" onclick="pinLast()">📌 تثبيت آخر رسالة</button></div><div class="messages" id="messages"></div><div class="tiny" id="typing" style="padding:0 15px"></div><div class="chat-compose"><input class="field" id="messageInput" placeholder="اكتب رسالة..." oninput="showTyping()"><button class="btn primary" onclick="sendMessage()">إرسال</button></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><b>رسائل مثبتة</b><div id="pinnedList" class="tiny" style="margin-top:8px">لا توجد رسائل مثبتة.</div></div>
+ </section>
+
+ <section class="page" id="feed"><div class="card"><h3 class="section-title">منشور جديد</h3><textarea class="field" id="postText" placeholder="اكتب منشورك..."></textarea><div class="row between" style="margin-top:10px"><span class="tiny">الصور يمكن إضافتها بعد ربط التخزين</span><button class="btn primary" onclick="publishPost(true)">نشر المنشور</button></div></div><div id="feedPosts"></div></section>
+
+ <section class="page" id="alerts"><div class="row between"><h3 class="section-title">مركز الإشعارات</h3><button class="btn small" onclick="markAllRead()">تحديد الكل كمقروء</button></div><div id="alertList"></div></section>
+
+ <section class="page" id="profile">
+  <div class="card"><div class="row"><div class="avatar" id="profileAvatar" style="width:76px;height:76px;font-size:26px">ن</div><div><h2 id="profileName" style="margin:0">نعيم</h2><div class="muted" id="profileStatus">أهلاً بالجميع!</div><div class="tiny" id="profileLevel">المستوى 1</div></div></div><div class="row" style="margin-top:15px;flex-wrap:wrap"><button class="btn small" onclick="editProfile()">تعديل الملف</button><button class="btn small" onclick="toast('رابط الملف الشخصي يحتاج استضافة وربط حسابات')">نسخ رابط الملف</button></div></div>
+  <div class="grid"><div class="card"><div class="muted">النقاط</div><div class="stat" id="profileXP">0</div></div><div class="card"><div class="muted">الشارات</div><div id="badges">🏅 مبتدئ</div></div></div>
+  <div class="card"><h3 class="section-title">الحالة اليومية</h3><input class="field" id="statusInput" maxlength="90" placeholder="اكتب حالتك..." ><button class="btn primary" style="margin-top:9px" onclick="saveStatus()">حفظ الحالة</button></div>
+  <div class="card"><h3 class="section-title">إطارات الصورة</h3><div class="row" style="flex-wrap:wrap"><button class="btn small" onclick="setFrame('none')">بدون إطار</button><button class="btn small" onclick="setFrame('gold')">ذهبي 🟡</button><button class="btn small" onclick="setFrame('purple')">بنفسجي 🟣</button><button class="btn small" onclick="setFrame('green')">أخضر 🟢</button></div></div>
+ </section>
+
+ <section class="page" id="settings">
+  <div class="card"><h3 class="section-title">تخصيص المحادثات</h3><div class="setting"><span>لون فقاعات الرسائل</span><input type="color" id="bubbleColor" value="#44347d" onchange="setBubble(this.value)"></div><div class="setting"><span>خلفية المحادثة</span><select class="field" style="width:auto" id="chatTheme" onchange="setTheme(this.value)"><option value="default">داكنة</option><option value="purple">بنفسجية</option><option value="green">خضراء</option></select></div></div>
+  <div class="card"><h3 class="section-title">الخصوصية والأمان</h3>
+   <div class="setting"><span>إظهار حالة الاتصال</span><input class="switch" type="checkbox" id="showOnline" checked onchange="savePrivacy()"></div>
+   <div class="setting"><span>إظهار آخر ظهور</span><input class="switch" type="checkbox" id="showLastSeen" checked onchange="savePrivacy()"></div>
+   <div class="setting"><span>السماح للآخرين برؤية حالتي</span><input class="switch" type="checkbox" id="showStatus" checked onchange="savePrivacy()"></div>
+   <div class="setting"><span>وضع توفير البيانات</span><input class="switch" type="checkbox" id="dataSaver" onchange="savePrivacy()"></div>
+   <div class="setting"><span>حساب تجريبي متصل</span><span class="pill">محلي فقط</span></div>
+   <p class="tiny">الحظر والإبلاغ عن حسابات حقيقية يتطلبان حسابات وقاعدة بيانات مشتركة. لا توجد حسابات أخرى متصلة في هذه النسخة.</p>
+  </div>
+  <div class="card"><h3 class="section-title">الأصدقاء المفضلون</h3><div id="favoriteSettings"></div></div>
+  <div class="card"><h3 class="section-title">إدارة البيانات</h3><button class="btn danger" onclick="resetDemo()">مسح بيانات النسخة التجريبية</button></div>
+ </section>
+</main>
+</div>
+<div class="modal-back" id="modalBack" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
+<div id="toast" class="toast hidden"></div>
+<script>
+const KEY='chatchat_demo_v1';
+const defaults={
+ me:{name:'نعيم',status:'أهلاً بالجميع!',frame:'none',xp:0},
+ friends:[{id:'sara',name:'سارة',letter:'س',online:true,last:'أهلاً! كيف حالك؟',favorite:true,blocked:false},{id:'adam',name:'آدم',letter:'آ',online:false,last:'نشوفك لاحقاً',favorite:false,blocked:false},{id:'yasmine',name:'ياسمين',letter:'ي',online:true,last:'شفت المنشور تاعك',favorite:false,blocked:false}],
+ messages:{sara:[{id:1,from:'them',text:'أهلاً! مرحباً بك في Chat Chat 👋',reactions:[]},{id:2,from:'me',text:'أهلاً، واش راكي؟',reactions:[]},{id:3,from:'them',text:'الحمد لله! الموقع شكله رائع 😄',reactions:[]}] ,adam:[],yasmine:[]},
+ posts:[{id:1,author:'سارة',text:'مرحبا بالجميع! ✨ أول يوم ليا هنا.',likes:2,comments:[]}],
+ alerts:[{id:1,text:'مرحباً بك في Chat Chat! استكشف الميزات الجديدة.',read:false}],
+ pinned:[],privacy:{online:true,last:true,status:true,saver:false},theme:'default',bubble:'#44347d',statusStories:[]
+};
+let data=load(),current='sara',activePage='home';
+function load(){try{return {...structuredClone(defaults),...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return structuredClone(defaults)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));refreshStats()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(s){let t=document.getElementById('toast');t.textContent=s;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2400)}
+function page(p){activePage=p;document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));document.getElementById('pageTitle').textContent=({home:'الرئيسية',chats:'المحادثات',feed:'المنشورات',alerts:'الإشعارات',profile:'ملفي الشخصي',settings:'الإعدادات'})[p];renderAll()}
+document.getElementById('nav').addEventListener('click',e=>{let b=e.target.closest('button[data-page]');if(b)page(b.dataset.page)});
+function avatarHTML(letter,frame='none'){return `<div class="avatar ${frame==='gold'?'badge-frame':''}" style="${frame==='purple'?'outline:3px solid #a78bfa;outline-offset:2px':frame==='green'?'outline:3px solid #34d399;outline-offset:2px':''}">${esc(letter)}</div>`}
+function refreshStats(){let lvl=Math.floor(data.me.xp/100)+1;['levelStat','profileLevel'].forEach(id=>{let e=document.getElementById(id);if(e)e.textContent='المستوى '+lvl});document.getElementById('xpStat').textContent=data.me.xp+' نقطة · '+(data.me.xp%100)+'/100 للمستوى التالي';document.getElementById('profileXP').textContent=data.me.xp;document.getElementById('favStat').textContent=data.friends.filter(f=>f.favorite&&!f.blocked).length;document.getElementById('alertStat').textContent=data.alerts.filter(a=>!a.read).length}
+function addXP(n){data.me.xp+=n;save()}
+function renderStories(){let all=[{name:'قصتي',letter:'+',own:true},...data.friends.filter(f=>!f.blocked).map(f=>({name:f.name,letter:f.letter}))];document.getElementById('storyStrip').innerHTML=all.map(x=>`<div class="story" onclick="${x.own?'addStory()':`toast('قصة '+${JSON.stringify(x.name)}+' غير متاحة في الوضع المحلي')`}"><div class="story-ring">${avatarHTML(x.letter)}</div><small>${esc(x.name)}</small></div>`).join('')}
+function renderChatList(){let q=(document.getElementById('chatFilter')?.value||'').toLowerCase();document.getElementById('chatList').innerHTML=data.friends.filter(f=>!f.blocked&&f.name.toLowerCase().includes(q)).map(f=>`<div class="chat-person ${current===f.id?'active':''}" onclick="selectChat('${f.id}')">${avatarHTML(f.letter)}<div class="details"><strong>${esc(f.name)} ${f.favorite?'⭐':''}</strong><small>${esc(f.last||'ابدأ محادثة')}</small></div><span class="tiny">${f.online?'🟢':'⚪'}</span></div>`).join('')||'<p class="tiny">لا توجد نتائج.</p>'}
+function selectChat(id){current=id;renderChatList();renderMessages()}
+function renderMessages(){let f=data.friends.find(x=>x.id===current);if(!f)return;document.getElementById('chatName').textContent=f.name;document.getElementById('chatAvatar').textContent=f.letter;document.getElementById('chatPresence').textContent=data.privacy.online?(f.online?'● متصلة (تجريبي)':'○ غير متصلة (تجريبي)'):'حالة الاتصال مخفية';let arr=data.messages[current]||[];document.getElementById('messages').innerHTML=arr.map(m=>`<div class="bubble ${m.from==='me'?'mine':''}" data-id="${m.id}">${esc(m.text)}${m.pinned?'<div class="tiny">📌 مثبتة</div>':''}<div class="reacts">${(m.reactions||[]).map(r=>`<span class="reaction">${r}</span>`).join('')}<button class="reaction" onclick="react(${m.id})">＋</button></div></div>`).join('');document.getElementById('messages').scrollTop=999999;renderPinned()}
+function sendMessage(){let inp=document.getElementById('messageInput'),v=inp.value.trim();if(!v)return;let arr=data.messages[current]||(data.messages[current]=[]);arr.push({id:Date.now(),from:'me',text:v,reactions:[]});let f=data.friends.find(x=>x.id===current);f.last=v;inp.value='';document.getElementById('typing').textContent='';addXP(2);save();renderChatList();renderMessages()}
+function showTyping(){document.getElementById('typing').textContent='أنت تكتب... (مؤشر محلي فقط)'}
+function react(id){let m=(data.messages[current]||[]).find(x=>x.id===id);if(!m)return;let r=prompt('اكتب إيموجي للتفاعل: ❤️ 😂 👍 😮 🔥','❤️');if(r){m.reactions=m.reactions||[];m.reactions.push(r.slice(0,4));save();renderMessages()}}
+function pinLast(){let a=data.messages[current]||[];if(!a.length)return toast('لا توجد رسالة لتثبيتها');a[a.length-1].pinned=true;data.pinned.push({chat:current,text:a[a.length-1].text,id:a[a.length-1].id});save();renderMessages();toast('تم تثبيت الرسالة')}
+function renderPinned(){let p=data.pinned.filter(x=>x.chat===current);document.getElementById('pinnedList').innerHTML=p.length?p.map(x=>`<div class="notice">📌 ${esc(x.text)} <button class="btn small" onclick="unpin(${x.id})">إلغاء</button></div>`).join(''):'لا توجد رسائل مثبتة.'}
+function unpin(id){let m=(data.messages[current]||[]).find(x=>x.id===id);if(m)m.pinned=false;data.pinned=data.pinned.filter(x=>x.id!==id||x.chat!==current);save();renderMessages()}
+function publishPost(home=false){let el=document.getElementById(home?'quickPost':'postText'),v=el.value.trim();if(!v)return toast('اكتب شيئاً أولاً');data.posts.unshift({id:Date.now(),author:data.me.name,text:v,likes:0,comments:[]});el.value='';data.alerts.unshift({id:Date.now(),text:'تم نشر منشورك بنجاح.',read:false});addXP(5);save();renderPosts();toast('تم نشر المنشور')}
+function renderPosts(){let h=data.posts.map(p=>`<div class="card post"><div class="post-head">${avatarHTML(p.author[0]||'؟')}<div><b>${esc(p.author)}</b><div class="tiny">منشور مجتمعي</div></div></div><div class="post-body">${esc(p.text)}</div><div class="post-actions"><button class="btn small" onclick="likePost(${p.id})">❤️ إعجاب (${p.likes})</button><button class="btn small" onclick="commentPost(${p.id})">💬 تعليق (${p.comments.length})</button><button class="btn small" onclick="sharePost(${p.id})">↗ مشاركة</button></div>${p.comments.map(c=>`<div class="notice"><b>${esc(c.by)}:</b> ${esc(c.text)}</div>`).join('')}</div>`).join('')||'<div class="card muted">لا توجد منشورات بعد.</div>';document.getElementById('feedPosts').innerHTML=h;document.getElementById('homePosts').innerHTML=data.posts.slice(0,2).map(p=>`<div class="card"><b>${esc(p.author)}</b><p>${esc(p.text)}</p><span class="tiny">❤️ ${p.likes} إعجاب · 💬 ${p.comments.length} تعليق</span></div>`).join('')}
+function likePost(id){let p=data.posts.find(x=>x.id===id);if(p){p.likes++;addXP(1);renderPosts()}}
+function commentPost(id){let v=prompt('اكتب تعليقك');if(v?.trim()){let p=data.posts.find(x=>x.id===id);p.comments.push({by:data.me.name,text:v.trim()});addXP(2);renderPosts()}}
+function sharePost(id){let p=data.posts.find(x=>x.id===id);if(p)navigator.clipboard?.writeText(p.text).then(()=>toast('تم نسخ نص المنشور')).catch(()=>toast('تعذر النسخ'))}
+function renderAlerts(){document.getElementById('alertList').innerHTML=data.alerts.map(a=>`<div class="notice" style="opacity:${a.read?.55:1}">${esc(a.text)} <span class="tiny">${a.read?'· مقروء':'· جديد'}</span></div>`).join('')||'<p class="muted">لا توجد إشعارات.</p>'}
+function markAllRead(){data.alerts.forEach(a=>a.read=true);save();renderAlerts()}
+function editProfile(){let n=prompt('اسم العرض',data.me.name);if(n?.trim()){data.me.name=n.trim().slice(0,30);save();renderAll()}}
+function saveStatus(){data.me.status=document.getElementById('statusInput').value.trim().slice(0,90);save();renderProfile();toast('تم حفظ الحالة')}
+function renderProfile(){document.getElementById('miniName').textContent=data.me.name;document.getElementById('profileName').textContent=data.me.name;document.getElementById('profileStatus').textContent=data.me.status||'لا توجد حالة';document.getElementById('statusInput').value=data.me.status||'';['miniAvatar','profileAvatar'].forEach(id=>{let e=document.getElementById(id);e.textContent=data.me.name[0]||'؟';e.className='avatar '+(data.me.frame==='gold'?'badge-frame':'');if(data.me.frame==='purple')e.style.outline='3px solid #a78bfa';if(data.me.frame==='green')e.style.outline='3px solid #34d399'});document.getElementById('badges').textContent=data.me.xp>=100?'🏆 نشيط · 🏅 مبتدئ':'🏅 مبتدئ'}
+function setFrame(v){data.me.frame=v;save();renderProfile();toast('تم تغيير الإطار')}
+function setBubble(v){data.bubble=v;document.documentElement.style.setProperty('--bubble',v);save()}
+function setTheme(v){data.theme=v;document.querySelector('.chat-window').style.background=v==='purple'?'#171329':v==='green'?'#10251f':'#0c1018';save()}
+function savePrivacy(){data.privacy={online:showOnline.checked,last:showLastSeen.checked,status:showStatus.checked,saver:dataSaver.checked};save();renderMessages()}
+function renderSettings(){showOnline.checked=data.privacy.online;showLastSeen.checked=data.privacy.last;showStatus.checked=data.privacy.status;dataSaver.checked=data.privacy.saver;document.getElementById('bubbleColor').value=data.bubble;document.getElementById('chatTheme').value=data.theme;document.getElementById('favoriteSettings').innerHTML=data.friends.map(f=>`<div class="setting"><span>${esc(f.name)}</span><button class="btn small" onclick="toggleFav('${f.id}')">${f.favorite?'⭐ إزالة من المفضلة':'☆ إضافة للمفضلة'}</button></div>`).join('')}
+function toggleFav(id){let f=data.friends.find(x=>x.id===id);f.favorite=!f.favorite;save();renderSettings();renderChatList()}
+function addStory(){let s=prompt('اكتب قصة قصيرة (نصية)');if(s?.trim()){data.statusStories.push({text:s,at:Date.now()});data.alerts.unshift({id:Date.now(),text:'تمت إضافة قصتك.',read:false});addXP(3);renderStories();toast('تمت إضافة القصة محلياً')}}
+function openSearch(){modal(`<h3>بحث في Chat Chat</h3><input class="field" id="globalSearch" placeholder="ابحث عن مستخدم أو رسالة أو منشور..." oninput="doSearch()"><div id="searchResults"></div><div class="modal-actions"><button class="btn" onclick="closeModal()">إغلاق</button></div>`);document.getElementById('globalSearch').focus()}
+function doSearch(){let q=document.getElementById('globalSearch').value.toLowerCase(),out=[];data.friends.forEach(f=>{if(f.name.toLowerCase().includes(q))out.push('مستخدم: '+f.name)});data.posts.forEach(p=>{if(p.text.toLowerCase().includes(q))out.push('منشور: '+p.text)});Object.entries(data.messages).forEach(([id,arr])=>arr.forEach(m=>{if(m.text.toLowerCase().includes(q))out.push('رسالة: '+m.text)}));document.getElementById('searchResults').innerHTML=q?out.map(x=>`<div class="notice">${esc(x)}</div>`).join('')||'<p class="tiny">لا توجد نتائج محلية.</p>':''}
+function modal(s){document.getElementById('modal').innerHTML=s;document.getElementById('modalBack').classList.add('show')}
+function closeModal(){document.getElementById('modalBack').classList.remove('show')}
+function resetDemo(){if(confirm('هل تريد مسح كل بيانات النسخة التجريبية؟')){localStorage.removeItem(KEY);data=structuredClone(defaults);save();renderAll();toast('تمت إعادة ضبط النسخة')}}
+function renderAll(){renderStories();renderChatList();renderMessages();renderPosts();renderAlerts();renderProfile();renderSettings();refreshStats()}
+document.getElementById('messageInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
+renderAll();
+</script>
+</body>
+</html>
