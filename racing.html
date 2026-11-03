@@ -1,0 +1,40 @@
+<!doctype html><html lang=ar><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>سباق النجوم</title>
+<style>html,body{margin:0;height:100%;background:#0d0d1a;overflow:hidden;touch-action:none;user-select:none;font-family:system-ui}
+#c{position:absolute;inset:0;margin:auto;width:min(100vw,177.7vh);aspect-ratio:16/9}
+.b{position:fixed;bottom:16px;width:66px;height:66px;border-radius:50%;border:0;background:#ffffff55;color:#fff;font-size:24px}
+#p{position:fixed;top:8px;right:8px;display:flex;gap:6px}#p button{border:0;border-radius:10px;padding:6px 10px;background:#ffffff40;color:#fff;font-size:16px}
+@media(hover:hover){.b{display:none}}</style>
+<canvas id=c width=640 height=360></canvas>
+<div id=p><button onclick="pz=!pz">⏸</button><button onclick="mu=!mu;this.textContent=mu?'🔇':'🔊'">🔊</button></div>
+<button class=b data-k=KeyA style="left:12px">◀</button><button class=b data-k=KeyD style="left:86px">▶</button><button class=b data-k=KeyS style="right:86px">■</button><button class=b data-k=KeyW style="right:12px">▲</button>
+<script>
+const c=document.getElementById('c'),g=c.getContext('2d'),K={},CX=320,CY=180,RO=170,RI=85,T=Math.PI*2;let pz=0,mu=0,AC,car,ai,st='menu',t0=0,tk=0,pl=0,tm=0;
+function snd(f,d=.1,t='square'){if(mu)return;try{AC=AC||new AudioContext();const o=AC.createOscillator(),v=AC.createGain();o.type=t;o.frequency.value=f;v.gain.value=.04;o.connect(v);v.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch{}}
+function go(){if(pz){pz=0;return}if(st=='race'||Date.now()-tk<400)return;tk=Date.now();init();st='cd';t0=Date.now()}
+onkeydown=e=>{K[e.code]=1;if(e.code.startsWith('Arrow')||e.code=='Space')e.preventDefault();if(e.code=='KeyP')pz=!pz;else go()};onkeyup=e=>K[e.code]=0;
+document.querySelectorAll('[data-k]').forEach(b=>{b.onpointerdown=()=>{K[b.dataset.k]=1;go()};b.onpointerup=b.onpointerleave=b.onpointercancel=()=>K[b.dataset.k]=0});c.onpointerdown=go;
+function init(){car={x:CX+127,y:CY,a:-Math.PI/2,v:0,pr:0,th:0};ai=[{r:112,s:1.95,th:.12,c:'#ff4d6d'},{r:142,s:2.1,th:-.12,c:'#ffb703'}]}
+const wr=a=>a>Math.PI?a-T:a<-Math.PI?a+T:a;
+function up(){if(pz||st=='menu'||st=='fin')return;if(st=='cd'){if(Date.now()-t0>3000){st='race';t0=Date.now();snd(900,.4)}return}
+const u=K.ArrowUp||K.KeyW,d=K.ArrowDown||K.KeyS,l=K.ArrowLeft||K.KeyA,r=K.ArrowRight||K.KeyD;
+const dist=Math.hypot(car.x-CX,car.y-CY),on=dist>RI&&dist<RO;
+if(u)car.v+=.06;if(d)car.v-=.08;car.v*=on?.992:.96;car.v=Math.max(-1,Math.min(car.v,on?2.8:1.1));
+car.a+=((r?1:0)-(l?1:0))*.05*Math.min(1,Math.abs(car.v)/1.5)*(car.v<0?-1:1);
+car.x+=Math.cos(car.a)*car.v;car.y+=Math.sin(car.a)*car.v;
+const th=Math.atan2(car.y-CY,car.x-CX);car.pr-=wr(th-car.th);car.th=th;
+ai.forEach(o=>{o.th-=o.s/o.r*(car.pr>o.th*-1+1?1.04:1)*.9});
+tm=(Date.now()-t0)/1000;
+if(car.pr>=T*3){st='fin';pl=1+ai.filter(o=>-o.th>=car.pr).length;parent.postMessage({cg:1,game:'race',score:Math.max(50,(4-pl)*100)},'*');snd(1200,.5,'sine')}}
+function cr(x,y,a,col){g.save();g.translate(x,y);g.rotate(a);g.fillStyle=col;g.beginPath();g.roundRect(-10,-6,20,12,3);g.fill();g.fillStyle='#bfe3ff';g.fillRect(1,-4,5,8);g.fillStyle='#0006';g.fillRect(-10,-6,3,12);g.restore()}
+function dr(){g.fillStyle='#2e8b57';g.fillRect(0,0,640,360);g.fillStyle='#3aa066';for(let i=0;i<40;i++)g.fillRect(i*53%640,i*97%360,12,5);
+g.fillStyle='#454a5a';g.beginPath();g.arc(CX,CY,RO,0,T);g.fill();g.fillStyle='#2e8b57';g.beginPath();g.arc(CX,CY,RI,0,T);g.fill();
+g.lineWidth=6;g.setLineDash([14,14]);g.strokeStyle='#fff';g.beginPath();g.arc(CX,CY,RO-3,0,T);g.stroke();g.strokeStyle='#e63946';g.lineDashOffset=14;g.beginPath();g.arc(CX,CY,RO-3,0,T);g.stroke();
+g.lineDashOffset=0;g.strokeStyle='#fff';g.beginPath();g.arc(CX,CY,RI+3,0,T);g.stroke();g.lineWidth=2;g.setLineDash([10,16]);g.strokeStyle='#ffffff70';g.beginPath();g.arc(CX,CY,127,0,T);g.stroke();g.setLineDash([]);
+g.fillStyle='#fff';g.fillRect(CX+RI,CY-3,RO-RI,6);
+ai.forEach(o=>cr(CX+o.r*Math.cos(o.th),CY+o.r*Math.sin(o.th),o.th-Math.PI/2,o.c));cr(car.x,car.y,car.a,'#6d4aff');
+g.fillStyle='#fff';g.font='bold 16px system-ui';g.textAlign='left';g.fillText('اللفة '+Math.min(3,Math.floor(Math.max(0,car.pr)/T)+1)+'/3   '+tm.toFixed(1)+'s   '+Math.round(Math.abs(car.v)*60)+' km/h',12,24);
+g.textAlign='center';let big='',sm='';
+if(pz){big='متوقفة مؤقتًا';sm='اضغط للمتابعة'}else if(st=='menu'){big='سباق النجوم';sm='↑ تسارع · ↓ فرامل · ← → توجيه · 3 لفات · اضغط للبدء'}else if(st=='fin'){big=pl==1?'🏆 المركز الأول!':'المركز '+pl;sm='الزمن '+tm.toFixed(1)+'s · اضغط للعب مجددًا'}else if(st=='cd'){big=3-Math.floor((Date.now()-t0)/1000)||'';}
+if(big){g.fillStyle='#000a';g.fillRect(0,0,640,360);g.fillStyle='#fff';g.font='bold 36px system-ui';g.fillText(big,320,160);g.font='16px system-ui';g.fillText(sm,320,200)}}
+init();(function f(){up();dr();requestAnimationFrame(f)})();
+</script></html>

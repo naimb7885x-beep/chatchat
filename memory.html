@@ -1,0 +1,23 @@
+<!doctype html><html lang=ar dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><title>توأم</title>
+<style>html,body{margin:0;min-height:100%;background:linear-gradient(160deg,#14143a,#2a1a5e);color:#fff;font-family:system-ui;user-select:none}
+#h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-weight:700}#h button{border:0;border-radius:10px;padding:6px 10px;background:#ffffff30;color:#fff;font-size:16px;margin-inline-start:6px}
+#g{display:grid;gap:8px;padding:10px;max-width:520px;margin:auto}
+.k{aspect-ratio:1;perspective:400px;cursor:pointer}.k i{display:block;height:100%;position:relative;transform-style:preserve-3d;transition:transform .35s}.k.f i{transform:rotateY(180deg)}
+.k b,.k u{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;display:grid;place-items:center;text-decoration:none;font-size:clamp(22px,8vw,44px)}
+.k b{background:linear-gradient(135deg,#2f6bff,#8a3ffc);font-size:26px}.k u{background:#fff;transform:rotateY(180deg)}.k.m u{background:#b8f5c8}
+#o{position:fixed;inset:0;background:#000b;display:none;place-items:center;text-align:center}#o div{background:#1b1b3f;padding:28px;border-radius:20px}#o button{border:0;border-radius:12px;padding:10px 20px;background:linear-gradient(135deg,#2f6bff,#8a3ffc);color:#fff;font-size:16px;font-weight:700;margin-top:12px}</style>
+<div id=h><span id=a></span><span><span id=t>0s</span><button onclick="mu=!mu;this.textContent=mu?'🔇':'🔊'">🔊</button><button onclick="st()">↻</button></span></div><div id=g></div><div id=o><div><h2 id=ot></h2><p id=os></p><button id=ob></button></div></div>
+<script>
+const LV=[[2,3],[3,4],[4,4],[4,5],[5,6]],EM='🐱🐶🦊🐼🦁🐸🐵🐙🦄🐢🐳🦋🍎⚽🚀'.match(/./gu);let lv=0,sc=0,mv=0,t=0,tm,open=[],lock=0,mu=0,AC,left=0;
+function snd(f,d=.1){if(mu)return;try{AC=AC||new AudioContext();const o=AC.createOscillator(),v=AC.createGain();o.type='sine';o.frequency.value=f;v.gain.value=.05;o.connect(v);v.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch{}}
+function st(){clearInterval(tm);const[r,c]=LV[lv],n=r*c/2,d=[...EM.slice(0,n),...EM.slice(0,n)].sort(()=>Math.random()-.5);mv=0;t=0;open=[];lock=0;left=n;
+const G=document.getElementById('g');G.style.gridTemplateColumns=`repeat(${c},1fr)`;G.innerHTML=d.map((e,i)=>`<div class=k data-i=${i} data-e=${e}><i><b>?</b><u>${e}</u></i></div>`).join('');
+G.onclick=ev=>{const k=ev.target.closest('.k');if(!k||lock||k.classList.contains('f'))return;k.classList.add('f');snd(500);open.push(k);if(open.length==2){mv++;lock=1;const[a,b]=open;if(a.dataset.e==b.dataset.e){a.classList.add('m');b.classList.add('m');snd(900,.2);open=[];lock=0;if(!--left)win()}else setTimeout(()=>{a.classList.remove('f');b.classList.remove('f');open=[];lock=0},700)}hud()};
+tm=setInterval(()=>{t++;hud()},1000);hud()}
+const hud=()=>{document.getElementById('a').textContent=`المستوى ${lv+1}/5 · حركات ${mv} · ⭐${sc}`;document.getElementById('t').textContent=t+'s'};
+function win(){clearInterval(tm);const p=Math.max(20,120-mv*3-t);sc+=p;const last=lv==4,o=document.getElementById('o');snd(1100,.4);
+document.getElementById('ot').textContent=last?'🎉 أنهيت كل المستويات!':'أحسنت!';document.getElementById('os').textContent=`+${p} نقطة · المجموع ${sc}`;
+const b=document.getElementById('ob');b.textContent=last?'العب من جديد':'المستوى التالي';b.onclick=()=>{o.style.display='none';if(last){lv=0;sc=0}else lv++;st()};o.style.display='grid';
+if(last)parent.postMessage({cg:1,game:'mem',score:sc},'*')}
+st();
+</script></html>
