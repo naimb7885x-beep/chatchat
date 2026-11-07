@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FREE FIRE LAB — فري فاير: سكنات مجانية، أخبار، تسريبات، أحداث</title>
+<meta name="description" content="FREE FIRE LAB: سكنات فري فاير المجانية الموثقة، آخر الأخبار والتسريبات، مؤقت السيزون وتقويم الأحداث لسيرفر MENA. | Skins gratuits, actus, fuites et événements Free Fire.">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:title" content="FREE FIRE LAB">
+<meta property="og:description" content="Skins gratuits, actualités, fuites et événements Free Fire — سكنات مجانية وأخبار وتسريبات فري فاير">
+<meta property="og:type" content="website">
+<meta property="og:image" content="logo.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="shell"></div>
+<div id="modal" aria-live="polite"></div>
+<noscript><p style="padding:24px;text-align:center">FREE FIRE LAB يحتاج إلى تفعيل JavaScript. | FREE FIRE LAB nécessite JavaScript.</p></noscript>
+<script>
+/* self-check: shows errors on screen instead of a blank page */
+(function () {
+  var box;
+  function show(m) {
+    if (!box) { box = document.createElement('pre'); box.style.cssText = 'position:fixed;z-index:9999;left:8px;right:8px;bottom:8px;max-height:70vh;overflow:auto;background:#3a0b0b;color:#fff;border:2px solid #ff6b6b;padding:12px;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left;border-radius:10px'; document.body.appendChild(box); }
+    box.textContent += m + '\n';
+  }
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t.tagName && t.tagName !== 'SCRIPT') return;
+    show('ERROR: ' + (e.message || 'a script file failed to load') + ' ' + ((t && t.src) || e.filename || ''));
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) { show('ERROR: ' + ((e.reason && (e.reason.message || e.reason)) || 'unknown')); });
+  setTimeout(function () {
+    if (document.querySelector('.hero')) return;
+    var files = ['app.js', 'data.js', 'firebase.js', 'i18n.js', 'util.js', 'admin.js', 'style.css', 'logo.png', 'favicon.png', 'manifest.webmanifest'];
+    Promise.all(files.map(function (f) {
+      return fetch(f, { cache: 'no-store' }).then(function (r) { return r.ok ? null : f + '  ->  NOT FOUND (' + r.status + ')'; }).catch(function () { return f + '  ->  network error'; });
+    })).then(function (res) {
+      res = res.filter(Boolean);
+      show(res.length ? 'MISSING FILES:\n' + res.join('\n') : 'All files are present. The page did not start: probably the Firebase library is blocked (VPN / ad-blocker / no internet). Send a screenshot of this box.');
+    });
+  }, 6000);
+})();
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
